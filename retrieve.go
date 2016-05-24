@@ -118,6 +118,132 @@ func (t TextFields) String() string {
 	return str
 }
 
+// Title はレコードから[タイトル, 読み]を返すメソッド
+func (r *Record) Title() (ret []string) {
+	ret = make([]string, 2)
+	for _, title := range r.Descriptions[0].Title {
+		if len(title.Lang) > 0 {
+			ret[0] = title.Text
+		} else {
+			ret[1] = title.Text
+		}
+	}
+	return
+}
+
+// Parents はレコードから[親書誌タイトル, NCID]の配列を返すメソッド
+func (r *Record) Parents() (ret [][]string, ok bool) {
+	fields := r.Descriptions[0].IsPartOf
+	if len(fields) == 0 {
+		return nil, false
+	}
+	ret = make([][]string, len(fields))
+	for i, field := range fields {
+		id := field.Resource
+		id = strings.Replace(id, "http://ci.nii.ac.jp/ncid/", "", 1)
+		id = strings.Replace(id, "#entity", "", 1)
+		ret[i] = []string{field.Title, id}
+	}
+	return ret, true
+}
+
+// Volumes はレコードから[巻号等, ISNB]の配列を返すメソッド
+func (r *Record) Volumes() (ret [][]string, ok bool) {
+	fields := r.Descriptions[0].HasPart
+	if len(fields) == 0 {
+		return nil, false
+	}
+	ret = make([][]string, len(fields))
+	for i, field := range fields {
+		id := field.Resource
+		id = strings.Replace(id, "urn:isbn:", "", 1)
+		ret[i] = []string{field.Title, id}
+	}
+	return ret, true
+}
+
+// Topics はレコードからTopicの配列を返すメソッド
+func (r *Record) Topics() (ret []string, ok bool) {
+	fields := r.Descriptions[0].Topics
+	if len(fields) == 0 {
+		return nil, false
+	}
+	ret = make([]string, len(fields))
+	for i, field := range fields {
+		ret[i] = field.Title
+	}
+	return ret, true
+}
+
+// Authors はレコードから[著者名, 読み, ALID]の配列を返すメソッド
+func (r *Record) Authors() (ret [][]string, ok bool) {
+	// 書誌情報だけで著者情報はなし
+	if len(r.Descriptions) == 1 {
+		return nil, false
+	}
+
+	var fields []Author
+	for _, description := range r.Descriptions {
+		if len(description.Authors) == 0 {
+			continue
+		} else {
+			fields = description.Authors
+		}
+	}
+	// 書誌情報と所蔵情報のみで著者情報はなし
+	if len(fields) == 0 {
+		return nil, false
+	}
+
+	ret = make([][]string, len(fields))
+	for i, field := range fields {
+		id := field.Author.About
+		id = strings.Replace(id, "http://ci.nii.ac.jp/author/", "", 1)
+		id = strings.Replace(id, "#entity", "", 1)
+
+		var author, yomi string
+		for _, name := range field.Author.Name {
+			if len(name.Lang) > 0 {
+				yomi = name.Text
+			} else {
+				author = name.Text
+			}
+		}
+		ret[i] = []string{author, yomi, id}
+	}
+	return ret, true
+}
+
+// Holdings はレコードから[所蔵館名, FAID, 所蔵館OPACURL]の配列を返すメソッド
+func (r *Record) Holdings() (ret [][]string, ok bool) {
+	// 書誌情報だけで所蔵館情報はなし
+	if len(r.Descriptions) == 1 {
+		return nil, false
+	}
+
+	var fields []Holding
+	for _, description := range r.Descriptions {
+		if len(description.Holdings) == 0 {
+			continue
+		} else {
+			fields = description.Holdings
+		}
+	}
+	// 書誌情報と著者情報のみで所蔵館情報はなし
+	if len(fields) == 0 {
+		return nil, false
+	}
+
+	ret = make([][]string, len(fields))
+	for i, field := range fields {
+		holding := field.Holding
+		id := holding.About
+		id = strings.Replace(id, "http://ci.nii.ac.jp/library/", "", 1)
+		ret[i] = []string{holding.Name[0].Text, id, holding.SeeAlso.Resource}
+	}
+	return ret, true
+}
+
 // Get はレコードIDを受け取り、情報をRecord構造体のポインタで返す関数
 func Get(url string, appid string) (*Record, error) {
 	if !strings.HasPrefix(url, RetrieveEndopoint) {
