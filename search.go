@@ -73,6 +73,8 @@ func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 	var v string
 	d.DecodeElement(&v, &start)
 	parse, err := time.Parse("2006-01-02T15:04:05-0700", v)
+	// RFC3339: 2006-01-02T15:04:05-07:00
+	//parse, err := time.Parse(time.RFC3339, v)
 	if err != nil {
 		return err
 	}
