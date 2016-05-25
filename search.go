@@ -4,10 +4,12 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"html"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 )
 
 // OpenSaerchEndpoint は、CiNii Books図書・雑誌書誌検索のOpenSearchのURI
@@ -15,11 +17,29 @@ const OpenSaerchEndpoint = "http://ci.nii.ac.jp/books/opensearch/search"
 
 // AtomFeed はAtom1.0レスポンス構造体
 type AtomFeed struct {
-	XMLName      xml.Name `xml:"http://www.w3.org/2005/Atom feed"`
-	TotalResults int      `xml:"http://a9.com/-/spec/opensearch/1.1/ totalResults"`
-	StartIndex   int      `xml:"http://a9.com/-/spec/opensearch/1.1/ startIndex"`
-	ItemsPerPage int      `xml:"http://a9.com/-/spec/opensearch/1.1/ itemsPerPage"`
-	Entries      []Entry  `xml:"http://www.w3.org/2005/Atom entry"`
+	XMLName      xml.Name   `xml:"http://www.w3.org/2005/Atom feed"`
+	Title        string     `xml:"http://www.w3.org/2005/Atom title"`
+	Links        []Link     `xml:"http://www.w3.org/2005/Atom link"`
+	ID           string     `xml:"http://www.w3.org/2005/Atom id"`
+	Updated      customTime `xml:"http://www.w3.org/2005/Atom updated"`
+	TotalResults int        `xml:"http://a9.com/-/spec/opensearch/1.1/ totalResults"`
+	StartIndex   int        `xml:"http://a9.com/-/spec/opensearch/1.1/ startIndex"`
+	ItemsPerPage int        `xml:"http://a9.com/-/spec/opensearch/1.1/ itemsPerPage"`
+	Entries      []Entry    `xml:"http://www.w3.org/2005/Atom entry"`
+}
+
+// Link はAtomFeed Linkフィールド構造体
+type Link struct {
+	Rel  string `xml:"rel,attr"`
+	Type string `xml:"type,attr"`
+	Href string `xml:"href,attr"`
+}
+
+// HTMLLink はAtomFeedからHTML Linkを返すメソッド
+func (f *AtomFeed) HTMLLink() (link string, err error) {
+	link = html.UnescapeString(f.Links[0].Href)
+	link, err = url.QueryUnescape(link)
+	return
 }
 
 // Entry はAtomFeedのエントリ構造体
@@ -43,6 +63,21 @@ type EAuthor struct {
 type Parent struct {
 	Title string `xml:"title,attr"`
 	Link  string `xml:",chardata"`
+}
+
+type customTime struct {
+	time.Time
+}
+
+func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var v string
+	d.DecodeElement(&v, &start)
+	parse, err := time.Parse("2006-01-02T15:04:05-0700", v)
+	if err != nil {
+		return err
+	}
+	*c = customTime{parse}
+	return nil
 }
 
 // Search はCiniiBooksをOpenSearchで検索する
