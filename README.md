@@ -12,7 +12,7 @@ go get github/zuki/cinii
 
 - NCIDを指定してタイトルとタイトルの読みを出力
 
-```go
+```golang
 package main
 
 import (
@@ -31,7 +31,7 @@ func main() {
 
 - OpenSearchを"Go言語"で検索してタイトルと著者を表示
 
-```go
+```golang
 package main
 
 import (
