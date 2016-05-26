@@ -247,10 +247,14 @@ func (r *Record) Holdings() (ret [][]string, ok bool) {
 // Get はレコードIDを受け取り、情報をRecord構造体のポインタで返す関数
 func Get(url string, appid string) (*Record, error) {
 	if !strings.HasPrefix(url, RetrieveEndopoint) {
-		url = fmt.Sprintf("%s/%s?appid=%s", RetrieveEndopoint, url, appid)
+		url = fmt.Sprintf("%s/%s", RetrieveEndopoint, url)
 	}
 	if !strings.HasSuffix(url, ".rdf") {
 		url += ".rdf"
+	}
+
+	if len(appid) > 0 {
+		url = fmt.Sprintf("%s?appid=%s", url, appid)
 	}
 
 	resp, err := http.Get(url)
