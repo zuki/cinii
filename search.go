@@ -15,22 +15,19 @@ const OpenSaerchEndpoint = "http://ci.nii.ac.jp/books/opensearch/search"
 
 // AtomFeed はAtom1.0レスポンス構造体
 type AtomFeed struct {
-	XMLName      xml.Name   `xml:"http://www.w3.org/2005/Atom feed"`
-	Title        string     `xml:"http://www.w3.org/2005/Atom title"`
-	Links        []Link     `xml:"http://www.w3.org/2005/Atom link"`
+	XMLName xml.Name `xml:"http://www.w3.org/2005/Atom feed"`
+	Title   string   `xml:"http://www.w3.org/2005/Atom title"`
+	Links   []struct {
+		Rel  string `xml:"rel,attr"`
+		Type string `xml:"type,attr"`
+		Href string `xml:"href,attr"`
+	} `xml:"http://www.w3.org/2005/Atom link"`
 	ID           string     `xml:"http://www.w3.org/2005/Atom id"`
 	Updated      customTime `xml:"http://www.w3.org/2005/Atom updated"`
 	TotalResults int        `xml:"http://a9.com/-/spec/opensearch/1.1/ totalResults"`
 	StartIndex   int        `xml:"http://a9.com/-/spec/opensearch/1.1/ startIndex"`
 	ItemsPerPage int        `xml:"http://a9.com/-/spec/opensearch/1.1/ itemsPerPage"`
 	Entries      []Entry    `xml:"http://www.w3.org/2005/Atom entry"`
-}
-
-// Link はAtomFeed Linkフィールド構造体
-type Link struct {
-	Rel  string `xml:"rel,attr"`
-	Type string `xml:"type,attr"`
-	Href string `xml:"href,attr"`
 }
 
 // HTMLLink はAtomFeedからHTML Linkを返すメソッド
@@ -42,25 +39,19 @@ func (f *AtomFeed) HTMLLink() (link string, err error) {
 
 // Entry はAtomFeedのエントリ構造体
 type Entry struct {
-	Title      string    `xml:"http://www.w3.org/2005/Atom title"`
-	ID         string    `xml:"http://www.w3.org/2005/Atom id"`
-	Authors    []EAuthor `xml:"http://www.w3.org/2005/Atom author"`
-	Publisher  string    `xml:"http://purl.org/dc/elements/1.1/ publisher"`
-	PubDate    string    `xml:"http://prismstandard.org/namespaces/basic/2.0/ publicationDate"`
-	IsPartOf   []Parent  `xml:"http://purl.org/dc/terms/ isPartOf"`
-	HasPart    []string  `xml:"http://purl.org/dc/terms/ hasPart"`
-	OwnerCount int       `xml:"http://ci.nii.ac.jp/ns/1.0/ ownerCount"`
-}
-
-// EAuthor はAtomFeed Authorフィールド構造体
-type EAuthor struct {
-	Name string `xml:"http://www.w3.org/2005/Atom name"`
-}
-
-// Parent はAtomFeed 親書誌フィールド構造体
-type Parent struct {
-	Title string `xml:"title,attr"`
-	Link  string `xml:",chardata"`
+	Title   string `xml:"http://www.w3.org/2005/Atom title"`
+	ID      string `xml:"http://www.w3.org/2005/Atom id"`
+	Authors []struct {
+		Name string `xml:"http://www.w3.org/2005/Atom name"`
+	} `xml:"http://www.w3.org/2005/Atom author"`
+	Publisher string `xml:"http://purl.org/dc/elements/1.1/ publisher"`
+	PubDate   string `xml:"http://prismstandard.org/namespaces/basic/2.0/ publicationDate"`
+	IsPartOf  []struct {
+		Title string `xml:"title,attr"`
+		Link  string `xml:",chardata"`
+	} `xml:"http://purl.org/dc/terms/ isPartOf"`
+	HasPart    []string `xml:"http://purl.org/dc/terms/ hasPart"`
+	OwnerCount int      `xml:"http://ci.nii.ac.jp/ns/1.0/ ownerCount"`
 }
 
 type customTime struct {
