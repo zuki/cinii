@@ -123,9 +123,9 @@ func (r *Record) Title() (ret []string) {
 	ret = make([]string, 2)
 	for _, title := range r.Descriptions[0].Title {
 		if len(title.Lang) > 0 {
-			ret[0] = title.Text
-		} else {
 			ret[1] = title.Text
+		} else {
+			ret[0] = title.Text
 		}
 	}
 	return
