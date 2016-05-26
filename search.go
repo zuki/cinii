@@ -2,13 +2,11 @@ package cinii
 
 import (
 	"encoding/xml"
-	"errors"
 	"fmt"
 	"html"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 )
 
@@ -84,20 +82,13 @@ func (c *customTime) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error 
 
 // Search はCiniiBooksをOpenSearchで検索する
 func Search(q url.Values) (*AtomFeed, error) {
-	if appid := q.Get("appid"); len(appid) == 0 {
-		appid, err := GetAppID()
-		if err != nil {
-			return nil, err
-		}
-		q.Set("appid", appid)
-	}
 	url := fmt.Sprintf("%s?%s", OpenSaerchEndpoint, q.Encode())
-	// URLを叩いてデータを取得
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -119,14 +110,4 @@ func ParseAtomFeed(body []byte) (*AtomFeed, error) {
 	}
 
 	return feed, nil
-}
-
-// GetAppID は環境変数 "CINII_APPID" からCiNii APIを利用するためのappidを取得
-func GetAppID() (string, error) {
-	appid := os.Getenv("CINII_APPID")
-	if len(appid) == 0 {
-		err := errors.New("Set your CiNii appid to CINII_APPID envrionmental variable")
-		return "", err
-	}
-	return appid, nil
 }
